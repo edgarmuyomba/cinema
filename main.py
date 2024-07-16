@@ -1,5 +1,7 @@
 import argparse
 import requests
+from urllib.parse import unquote
+import uuid
 
 base_url = "http://localhost:8000"
 
@@ -14,8 +16,11 @@ def create_parser():
 
     search_parser = sub_parsers.add_parser("search", help="Find a movie or serie")
     search_parser.add_argument('query', type=str, help="The search query or term")
-    search_parser.add_argument('-m','--movie', action='store_true', help="Search for a movie")
-    search_parser.add_argument('-s', '--serie', action='store_true', help="Search for a serie")
+
+    download_parser = sub_parsers.add_parser("download", help="Download the movie or series episode")
+    download_parser.add_argument('machine_name', type=str, help='The machine name of the movie or serie')
+    download_parser.add_argument('-m', '--movie', action='store_true', help='Download a movie')
+    download_parser.add_argument('-s', '--serie', action='store_true', help='Download a serie')
 
     return parser
 
@@ -32,14 +37,23 @@ def get_details(args):
         return None 
     
 def search(args):
+    response = requests.get(f'{base_url}/search/?query={args.query}')
+    print(response.json())
+
+def download(args):
     if args.movie:
-        response = requests.get(f'{base_url}/search/movie/?query={args.query}')
-        print(response.json())
-    elif args.serie:
-        response = requests.get(f'{base_url}/search/serie/?query={args.query}')
-        print(response.json())
-    else:
-        return None
+        response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
+        filename = f'{uuid.uuid4}.mp4'
+        _, params = response.headers['Content-Disposition'].split(';')
+        for param in params.split(';'):
+            key, value = param.strip().split('=')
+            if key == 'filename':
+                filename = unquote(value.strip('"'))
+                break
+        with open(f'download/movies/{filename}', 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    file.write(chunk)
     
 def main():
     parser = create_parser()
@@ -49,6 +63,8 @@ def main():
         get_details(args)
     elif args.command == "search":
         search(args)
+    elif args.command == "download":
+        download(args)
     else:
         parser.print_help()
     

@@ -1,6 +1,6 @@
 import argparse
 import requests
-from download import handle_download
+from Downloader import Downloader
 
 base_url = "http://localhost:8000"
 
@@ -40,12 +40,14 @@ def search(args):
     print(response.json())
 
 def download(args):
+    
     if args.movie:
         response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
-        handle_download(response)
+        downloader = Downloader(response, "movie")
+        downloader.download()
         
-    
     elif args.serie:
+        machine_name = args.machine_name
         season = input("Season: ")
         try:
             season = int(season)
@@ -58,13 +60,11 @@ def download(args):
             except ValueError:
                 print("Please enter a valid digit and try again!")
             else:
-                reponse = requests.get(f'{base_url}/download/serie/?season={season}&episode={episode}')
-                handle_download(response)
+                reponse = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}')
+                downloader = Downloader(response, "serie")
+                downloader.download()
 
-            
         
-        
-    
 def main():
     parser = create_parser()
     args = parser.parse_args()

@@ -1,9 +1,6 @@
 import argparse
 import requests
-from urllib.parse import unquote
-import uuid
-from tqdm import tqdm
-from time import sleep
+from download import handle_download
 
 base_url = "http://localhost:8000"
 
@@ -45,26 +42,28 @@ def search(args):
 def download(args):
     if args.movie:
         response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
-        total_size = int(response.headers.get('content-length', 0))
-        filename = f'{uuid.uuid4}.mp4'
-        _, params = response.headers['Content-Disposition'].split(';')
-        for param in params.split(';'):
-            key, value = param.strip().split('=')
-            if key == 'filename':
-                filename = unquote(value.strip('"'))
-                break
-        with open(f'download/movies/{filename}', 'wb') as file, tqdm(
-            desc=filename,
-            total=total_size,
-            unit='iB',
-            unit_scale=True,
-            unit_divisor=1024
-        ) as bar:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    size = file.write(chunk)
-                    bar.update(size)
-                    sleep(0.01)
+        handle_download(response)
+        
+    
+    elif args.serie:
+        season = input("Season: ")
+        try:
+            season = int(season)
+        except ValueError:
+            print("Please enter a valid digit and try again!")
+        else:
+            episode = input("Episode: ")
+            try:
+                episode = int(episode)
+            except ValueError:
+                print("Please enter a valid digit and try again!")
+            else:
+                reponse = requests.get(f'{base_url}/download/serie/?season={season}&episode={episode}')
+                handle_download(response)
+
+            
+        
+        
     
 def main():
     parser = create_parser()

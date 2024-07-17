@@ -52,7 +52,6 @@ def download(args):
     
     if args.movie:
         response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
-        # todo: parse response in case files don't exist and other errors
         if response.status_code == 404:
             print(response.json()['detail'])
         else:
@@ -74,7 +73,6 @@ def download(args):
                 print("Please enter a valid digit and try again!")
             else:
                 response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}')
-                # todo: parse response in case files don't exist and other errors
                 if response.status_code == 404:
                     print(response.json()['detail'])
                 else:

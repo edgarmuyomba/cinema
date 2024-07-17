@@ -13,8 +13,9 @@ class Downloader:
             "total_size": int(response.headers.get('content-length', 0)),
             "filename": f'{uuid.uuid4}.mp4'
         }
-        _, params = response.headers['Content-Disposition'].split(';')
-        for param in params.split(';'):
+
+        params = response.headers['Content-Disposition'].split(';')[1:]
+        for param in params:
             key, value = param.strip().split('=')
             details[key] = unquote(value.strip('"'))
 
@@ -27,7 +28,7 @@ class Downloader:
         elif self.type == "serie":
             season = self.details.get('season', 1)
             name = self.details.get('name')
-            filepath = f'downloads/series/{name}/{season}'
+            filepath = f'downloads/series/{name}/Season {season}'
         else:
             filepath = f'downloads/{self.details['filename']}'
         
@@ -48,6 +49,9 @@ class Downloader:
 
 
     def download(self):
+        filename = self.details['filename']
+        print(f"Downloading {filename}")
+
         filePath = self.get_file_path()
         bar = self.tqdm_bar()
 
@@ -57,3 +61,6 @@ class Downloader:
                     size = file.write(chunk)
                     bar.update(size)
                     sleep(0.01)
+        
+        bar.close()
+        print(f"Successfully installed {filename} to {filePath}")

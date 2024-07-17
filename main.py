@@ -27,24 +27,37 @@ def get_details(args):
     if args.movie:
         # get movie details
         response = requests.get(f'{base_url}/details/movie/{args.machine_name}/')
-        print(response.json())
+        if response.status_code == 404:
+            print(response.json()['detail'])
+        else:
+            print(response.json())
     elif args.serie:
         # get serie details
         response = requests.get(f'{base_url}/details/serie/{args.machine_name}/')
-        print(response.json())
+        if response.status_code == 404:
+            print(response.json()['detail'])
+        else:
+            print(response.json())
     else:
         return None 
     
 def search(args):
     response = requests.get(f'{base_url}/search/?query={args.query}')
-    print(response.json())
+    if response.status_code == 404:
+        print(response.json()['detail'])
+    else:
+        print(response.json())
 
 def download(args):
     
     if args.movie:
         response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
-        downloader = Downloader(response, "movie")
-        downloader.download()
+        # todo: parse response in case files don't exist and other errors
+        if response.status_code == 404:
+            print(response.json()['detail'])
+        else:
+            downloader = Downloader(response, "movie")
+            downloader.download()
         
     elif args.serie:
         machine_name = args.machine_name
@@ -60,9 +73,13 @@ def download(args):
             except ValueError:
                 print("Please enter a valid digit and try again!")
             else:
-                reponse = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}')
-                downloader = Downloader(response, "serie")
-                downloader.download()
+                response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}')
+                # todo: parse response in case files don't exist and other errors
+                if response.status_code == 404:
+                    print(response.json()['detail'])
+                else:
+                    downloader = Downloader(response, "serie")
+                    downloader.download()
 
         
 def main():

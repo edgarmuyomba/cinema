@@ -1,6 +1,7 @@
 import argparse
 import requests
 from Downloader import Downloader
+from Formatter import Formatter
 
 base_url = "http://localhost:8000"
 
@@ -24,36 +25,47 @@ def create_parser():
     return parser
 
 def get_details(args):
+
+    formatter = Formatter()
+
     if args.movie:
         # get movie details
         response = requests.get(f'{base_url}/details/movie/{args.machine_name}/')
         if response.status_code == 404:
-            print(response.json()['detail'])
+            formatter.format_error(response.json()['detail'])
         else:
-            print(response.json())
+            formatter.format_rule(f"Details: {args.machine_name}")
+            formatter.format_table(response.json())
     elif args.serie:
         # get serie details
         response = requests.get(f'{base_url}/details/serie/{args.machine_name}/')
         if response.status_code == 404:
-            print(response.json()['detail'])
-        else:
-            print(response.json())
+            formatter.format_error(response.json()['detail'])
+        else:        
+            formatter.format_rule(f"Details: {args.machine_name}")
+            formatter.format_table(response.json())
     else:
         return None 
     
 def search(args):
+
+    formatter = Formatter()
+
     response = requests.get(f'{base_url}/search/?query={args.query}')
     if response.status_code == 404:
-        print(response.json()['detail'])
+        formatter.format_error(response.json()['detail'])
     else:
-        print(response.json())
+        formatter.format_rule(f"Search: {args.query}")
+        formatter.format_table(response.json())
 
 def download(args):
+
+    formatter = Formatter()
     
     if args.movie:
         response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
         if response.status_code == 404:
-            print(response.json()['detail'])
+            formatter.format_error(response.json()['detail'])
         else:
             downloader = Downloader(response, "movie")
             downloader.download()
@@ -64,17 +76,17 @@ def download(args):
         try:
             season = int(season)
         except ValueError:
-            print("Please enter a valid digit and try again!")
+            formatter.format_error("Please enter a valid digit and try again!")
         else:
             episode = input("Episode: ")
             try:
                 episode = int(episode)
             except ValueError:
-                print("Please enter a valid digit and try again!")
+                formatter.format_error("Please enter a valid digit and try again!")
             else:
                 response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}')
                 if response.status_code == 404:
-                    print(response.json()['detail'])
+                    formatter.format_error(response.json()['detail'])
                 else:
                     downloader = Downloader(response, "serie")
                     downloader.download()

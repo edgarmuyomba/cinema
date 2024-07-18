@@ -35,7 +35,7 @@ def get_details(args):
             formatter.format_error(response.json()['detail'])
         else:
             formatter.format_rule(f"Details: {args.machine_name}")
-            formatter.format_table(response.json())
+            formatter.format_details(response.json())
     elif args.serie:
         # get serie details
         response = requests.get(f'{base_url}/details/serie/{args.machine_name}/')
@@ -43,7 +43,7 @@ def get_details(args):
             formatter.format_error(response.json()['detail'])
         else:        
             formatter.format_rule(f"Details: {args.machine_name}")
-            formatter.format_table(response.json())
+            formatter.format_details(response.json())
     else:
         return None 
     

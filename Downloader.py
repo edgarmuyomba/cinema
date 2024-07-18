@@ -1,8 +1,10 @@
 from urllib.parse import unquote
 import uuid
-from tqdm import tqdm
 from time import sleep
 import os
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeRemainingColumn, TransferSpeedColumn, DownloadColumn
+from rich.panel import Panel
 
 class Downloader:
     def __init__(self, response, type):
@@ -37,30 +39,45 @@ class Downloader:
 
         return filepath
     
-    def tqdm_bar(self):
-        return tqdm(
-                desc=self.details['filename'],
-                total=self.details['total_size'],
-                unit='iB',
-                unit_scale=True,
-                unit_divisor=1024,
-                colour="#67ab3f"
+    def progress_bar(self):
+        console = Console()
+        return Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                DownloadColumn(binary_units=True),
+                TimeRemainingColumn(),
+                TransferSpeedColumn(),
+                console=console
             )
 
 
     def download(self):
         filename = self.details['filename']
-        print(f"Downloading {filename}")
+
+        console = Console()
+        console.print()
+        panel = Panel(f"Downloading {filename}", title="Cinema")
+        console.print(panel)
 
         filePath = self.get_file_path()
-        bar = self.tqdm_bar()
 
-        with open(f'{filePath}/{self.details['filename']}', 'wb') as file:
-            for chunk in self.response.iter_content(chunk_size=8192):
-                if chunk:
-                    size = file.write(chunk)
-                    bar.update(size)
-                    sleep(0.01)
+        console.print()
         
-        bar.close()
-        print(f"Successfully installed {filename} to {filePath}")
+        with self.progress_bar() as progress:
+
+            task = progress.add_task(description=f"[green]{filename}", total=self.details['total_size'])
+
+            with open(f'{filePath}/{self.details['filename']}', 'wb') as file:
+                for chunk in self.response.iter_content(chunk_size=8192):
+                    if chunk:
+                        size = file.write(chunk)
+                        progress.update(task, advance=size)
+                        sleep(0.01)
+        
+        console.print()
+
+        console.print(f"Successfully installed [red]{filename}[/red] to [green]{filePath}")
+
+        console.print()
+        

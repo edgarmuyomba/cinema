@@ -61,28 +61,34 @@ class Authentication:
                 'username': username,
                 'password': password
             }
-
-            response = requests.post(f'{base_url}/accounts/login/', json=body)
-
-            if response.status_code == 200:
-                token = response.json()['token']
+            try:
+                response = requests.post(f'{base_url}/accounts/login/', json=body)
+            except requests.exceptions.RequestException:
+                print()
+                self.formatter.format_rule("Connection Error")
+                self.formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+                print()
                 break
-            elif response.status_code == 400:
-                errors = response.json()
-                self.formatter.format_rule("Errors")
-                for values in errors.values():
-                    for error in values:
-                        self.formatter.format_error(error)
-                        if error == "Unable to log in with provided credentials.":
-                            print()
-                            user_response = input("Do you have an account? (Y/N)\n")
+            else:
+                if response.status_code == 200:
+                    token = response.json()['token']
+                    break
+                elif response.status_code == 400:
+                    errors = response.json()
+                    self.formatter.format_rule("Errors")
+                    for values in errors.values():
+                        for error in values:
+                            self.formatter.format_error(error)
+                            if error == "Unable to log in with provided credentials.":
+                                print()
+                                user_response = input("Do you have an account? (Y/N)\n")
 
-                            if user_response == "Y":
-                                continue 
-                            else:
-                                token = self.signup()
-                                break             
-                continue
+                                if user_response == "Y":
+                                    continue 
+                                else:
+                                    token = self.signup()
+                                    break             
+                    continue
 
         if not token:
             self.formatter.format_error("Failed to authenticate. Please try again!")
@@ -103,20 +109,27 @@ class Authentication:
                 'password': password
             }
 
-            response = requests.post(f'{base_url}/accounts/signup/', json=body)
-
-            if response.status_code == 201:
-                token = response.json()['token']
+            try:
+                response = requests.post(f'{base_url}/accounts/signup/', json=body)
+            except requests.exceptions.RequestException:
+                print()
+                self.formatter.format_rule("Connection Error")
+                self.formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+                print()
                 break
-            elif response.status_code == 400:
-                errors = response.json()
-                self.formatter.format_rule("Errors")
-                for values in errors.values():
-                    for error in values:
-                        self.formatter.format_error(error)
-                continue
             else:
-                self.formatter.format_error("Failed to authenticate. Please try again!")
-                break
+                if response.status_code == 201:
+                    token = response.json()['token']
+                    break
+                elif response.status_code == 400:
+                    errors = response.json()
+                    self.formatter.format_rule("Errors")
+                    for values in errors.values():
+                        for error in values:
+                            self.formatter.format_error(error)
+                    continue
+                else:
+                    self.formatter.format_error("Failed to authenticate. Please try again!")
+                    break
         
         return token

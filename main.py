@@ -35,10 +35,17 @@ def latest(token):
         "Authorization": f"Bearer {token}"
     }
 
-    response = requests.get(f'{base_url}/latest/', headers=headers)
-    if response.status_code == 200:
-        formatter.format_rule("Latest titles")
-        formatter.format_table(response.json())
+    try:
+        response = requests.get(f'{base_url}/latest/', headers=headers)
+    except requests.exceptions.RequestException:
+        print()
+        formatter.format_rule("Connection Error")
+        formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+        print()
+    else:
+        if response.status_code == 200:
+            formatter.format_rule("Latest titles")
+            formatter.format_table(response.json())
 
 def get_details(args, token):
 
@@ -50,20 +57,36 @@ def get_details(args, token):
 
     if args.movie:
         # get movie details
-        response = requests.get(f'{base_url}/details/movie/{args.machine_name}/', headers=headers)
-        if response.status_code == 404:
-            formatter.format_error(response.json()['detail'])
+        try:
+            response = requests.get(f'{base_url}/details/movie/{args.machine_name}/', headers=headers)
+        except requests.exceptions.RequestException:
+            print()
+            formatter.format_rule("Connection Error")
+            formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+            print()
         else:
-            formatter.format_rule(f"Details: {args.machine_name}")
-            formatter.format_details(response.json())
+            if response.status_code == 404:
+                formatter.format_rule("Error")
+                formatter.format_error(response.json()['detail'])
+            else:
+                formatter.format_rule(f"Details: {args.machine_name}")
+                formatter.format_details(response.json())
     elif args.serie:
         # get serie details
-        response = requests.get(f'{base_url}/details/serie/{args.machine_name}/', headers=headers)
-        if response.status_code == 404:
-            formatter.format_error(response.json()['detail'])
-        else:        
-            formatter.format_rule(f"Details: {args.machine_name}")
-            formatter.format_details(response.json())
+        try:
+            response = requests.get(f'{base_url}/details/serie/{args.machine_name}/', headers=headers)
+        except requests.exceptions.RequestException:
+            print()
+            formatter.format_rule("Connection Error")
+            formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+            print()
+        else:
+            if response.status_code == 404:
+                formatter.format_rule("Error")
+                formatter.format_error(response.json()['detail'])
+            else:        
+                formatter.format_rule(f"Details: {args.machine_name}")
+                formatter.format_details(response.json())
     else:
         return None 
     
@@ -75,12 +98,20 @@ def search(args, token):
         "Authorization": f"Bearer {token}"
     }
 
-    response = requests.get(f'{base_url}/search/?query={args.query}', headers=headers)
-    if response.status_code == 404:
-        formatter.format_error(response.json()['detail'])
+    try:
+        response = requests.get(f'{base_url}/search/?query={args.query}', headers=headers)
+    except requests.exceptions.RequestException:
+        print()
+        formatter.format_rule("Connection Error")
+        formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+        print()
     else:
-        formatter.format_rule(f"Search: {args.query}")
-        formatter.format_table(response.json())
+        if response.status_code == 404:
+            formatter.format_rule("Error")
+            formatter.format_error(response.json()['detail'])
+        else:
+            formatter.format_rule(f"Search: {args.query}")
+            formatter.format_table(response.json())
 
 def download(args, token):
 
@@ -91,12 +122,20 @@ def download(args, token):
     }
     
     if args.movie:
-        response = requests.get(f'{base_url}/download/movie/{args.machine_name}', headers=headers)
-        if response.status_code == 404:
-            formatter.format_error(response.json()['detail'])
+        try:
+            response = requests.get(f'{base_url}/download/movie/{args.machine_name}', headers=headers)
+        except requests.exceptions.RequestException:
+            print()
+            formatter.format_rule("Connection Error")
+            formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+            print()
         else:
-            downloader = Downloader(response, "movie")
-            downloader.download()
+            if response.status_code == 404:
+                formatter.format_rule("Error")
+                formatter.format_error(response.json()['detail'])
+            else:
+                downloader = Downloader(response, "movie")
+                downloader.download()
         
     elif args.serie:
         machine_name = args.machine_name
@@ -112,12 +151,20 @@ def download(args, token):
             except ValueError:
                 formatter.format_error("Please enter a valid digit and try again!")
             else:
-                response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}', headers=headers)
-                if response.status_code == 404:
-                    formatter.format_error(response.json()['detail'])
+                try:
+                    response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}', headers=headers)
+                except requests.exceptions.RequestException:
+                    print()
+                    formatter.format_rule("Connection Error")
+                    formatter.format_error("Failed to establish connection to the server. Check your internet connection or please try again later!")
+                    print()
                 else:
-                    downloader = Downloader(response, "serie")
-                    downloader.download()
+                    if response.status_code == 404:
+                        formatter.format_rule("Error")
+                        formatter.format_error(response.json()['detail'])
+                    else:
+                        downloader = Downloader(response, "serie")
+                        downloader.download()
 
         
 def main():
@@ -138,8 +185,6 @@ def main():
             download(args, token)
         else:
             parser.print_help()
-    else:
-        print("----------------------------failed to get token---------------------")
     
 if __name__=='__main__':
     main()

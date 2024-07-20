@@ -2,6 +2,7 @@ import argparse
 import requests
 from Downloader import Downloader
 from Formatter import Formatter
+from auth.authentication import Authentication
 
 base_url = "http://localhost:8000"
 
@@ -26,22 +27,30 @@ def create_parser():
 
     return parser
 
-def latest():
+def latest(token):
 
     formatter = Formatter()
 
-    response = requests.get(f'{base_url}/latest/')
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.get(f'{base_url}/latest/', headers=headers)
     if response.status_code == 200:
         formatter.format_rule("Latest titles")
         formatter.format_table(response.json())
 
-def get_details(args):
+def get_details(args, token):
 
     formatter = Formatter()
 
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
     if args.movie:
         # get movie details
-        response = requests.get(f'{base_url}/details/movie/{args.machine_name}/')
+        response = requests.get(f'{base_url}/details/movie/{args.machine_name}/', headers=headers)
         if response.status_code == 404:
             formatter.format_error(response.json()['detail'])
         else:
@@ -49,7 +58,7 @@ def get_details(args):
             formatter.format_details(response.json())
     elif args.serie:
         # get serie details
-        response = requests.get(f'{base_url}/details/serie/{args.machine_name}/')
+        response = requests.get(f'{base_url}/details/serie/{args.machine_name}/', headers=headers)
         if response.status_code == 404:
             formatter.format_error(response.json()['detail'])
         else:        
@@ -58,23 +67,31 @@ def get_details(args):
     else:
         return None 
     
-def search(args):
+def search(args, token):
 
     formatter = Formatter()
 
-    response = requests.get(f'{base_url}/search/?query={args.query}')
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.get(f'{base_url}/search/?query={args.query}', headers=headers)
     if response.status_code == 404:
         formatter.format_error(response.json()['detail'])
     else:
         formatter.format_rule(f"Search: {args.query}")
         formatter.format_table(response.json())
 
-def download(args):
+def download(args, token):
 
     formatter = Formatter()
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
     
     if args.movie:
-        response = requests.get(f'{base_url}/download/movie/{args.machine_name}')
+        response = requests.get(f'{base_url}/download/movie/{args.machine_name}', headers=headers)
         if response.status_code == 404:
             formatter.format_error(response.json()['detail'])
         else:
@@ -95,7 +112,7 @@ def download(args):
             except ValueError:
                 formatter.format_error("Please enter a valid digit and try again!")
             else:
-                response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}')
+                response = requests.get(f'{base_url}/download/serie/{machine_name}?season={season}&episode={episode}', headers=headers)
                 if response.status_code == 404:
                     formatter.format_error(response.json()['detail'])
                 else:
@@ -107,16 +124,22 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    if args.command == "latest":
-        latest()
-    elif args.command == "details":
-        get_details(args)
-    elif args.command == "search":
-        search(args)
-    elif args.command == "download":
-        download(args)
+    authentication = Authentication()
+    token = authentication.get_token()
+
+    if token:
+        if args.command == "latest":
+            latest(token)
+        elif args.command == "details":
+            get_details(args, token)
+        elif args.command == "search":
+            search(args, token)
+        elif args.command == "download":
+            download(args, token)
+        else:
+            parser.print_help()
     else:
-        parser.print_help()
+        print("----------------------------failed to get token---------------------")
     
 if __name__=='__main__':
     main()

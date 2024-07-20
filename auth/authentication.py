@@ -3,6 +3,7 @@ import os
 import requests
 from getpass import getpass
 from ..Formatter import Formatter
+import json
 
 base_url = "http://localhost:8000"
 
@@ -33,10 +34,17 @@ class Authentication:
                 decrypted_token = self.cipher_suite.decrypt(encrypted_token).decode()
                 return decrypted_token
         else:
-            # login and get the token from server
-            token = self.login()
+            with open('config.json', 'r') as config_file:
+                config = json.load(config_file)
+                if config['hasAccount']:
+                    token = self.login()
+                else:
+                    token = self.signup()
             if token:
                 self.store_token(token)
+                with open('config.json', 'w') as  config_file:
+                    config = json.dumps({'hasAccount': True})
+                    config_file.write(config)
                 return token
             return None
     
@@ -66,7 +74,40 @@ class Authentication:
                     for error in value:
                         self.formatter.format_error(error)
                         if error == "Unable to log in with provided credentials.":
-                            pass
+                            token = self.signup()
+                            break             
+                continue
+
+        if not token:
+            self.formatter.format_error("Failed to authenticate. Please try again!")
+        
+        return token
+    
+    def signup(self):
+
+        token = None 
+
+        while True:
+            self.formatter.format_rule("Signup")
+            username = input("Username: ")
+            password = getpass("Password: ")
+
+            body = {
+                'username': username,
+                'password': password
+            }
+
+            response = requests.post(f'{base_url}/accounts/signup/', json=body)
+
+            if response.status_code == 200:
+                token = response.json()['token']
+                break
+            elif response.status_code == 400:
+                errors = response.json()
+                self.formatter.format_rule("Errors")
+                for key, value in errors.enumerate:
+                    for error in value:
+                        self.formatter.format_error(error)
                 continue
             else:
                 self.formatter.format_error("Failed to authenticate. Please try again!")

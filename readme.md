@@ -1,6 +1,25 @@
 # Cinema
 This is a command line tool used to download movies and series from the [Cinema-API](https://github.com/edgarmuyomba/cinemaAPI). It is bundled and distributed using executable files thus easily used by anyone who can operate the terminal without any knowledge of python programming.
 
+## Setup
+1. Clone the repo
+```bash
+git clone <url>
+```
+2. Create a virtual environment in the base directory
+```bash 
+python3 -m venv env
+```
+3. Activate the virtual environment
+```bash
+env/scripts/activate # for windows
+source env/bin/activate # for unix
+```
+4. Install dependencies
+```bash
+python3 -m pip install -r requirements.txt
+```
+
 ## Authentication
 All requests made from the cli-tool to the server require token authentication and if the user doesn't have an account or has never been authenticated, they will be required to authenticate themselves in order to access the functionalities
 ![auth_require](./screenshots/auth_require.png)

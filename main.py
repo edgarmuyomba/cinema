@@ -9,6 +9,8 @@ def create_parser():
     parser = argparse.ArgumentParser(description="Download movies and series through the terminal")
     sub_parsers = parser.add_subparsers(dest="command")
 
+    all_parser = sub_parsers.add_parser("latest", help="The latest titles")
+
     details_parser = sub_parsers.add_parser("details", help="Get details about a movie or serie")
     details_parser.add_argument('machine_name', type=str, help="The machine name of the movie or series")
     details_parser.add_argument('-m','--movie', action='store_true', help="Details about a movie")
@@ -23,6 +25,15 @@ def create_parser():
     download_parser.add_argument('-s', '--serie', action='store_true', help='Download a serie')
 
     return parser
+
+def latest():
+
+    formatter = Formatter()
+
+    response = requests.get(f'{base_url}/latest/')
+    if response.status_code == 200:
+        formatter.format_rule("Latest titles")
+        formatter.format_table(response.json())
 
 def get_details(args):
 
@@ -96,7 +107,9 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
 
-    if args.command == "details":
+    if args.command == "latest":
+        latest()
+    elif args.command == "details":
         get_details(args)
     elif args.command == "search":
         search(args)

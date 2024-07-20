@@ -1,3 +1,5 @@
 env/
 downloads/
 __pycache__/
+secret.key
+token.enc
